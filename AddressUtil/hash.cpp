@@ -11,6 +11,8 @@ static unsigned int endian(unsigned int x)
 
 bool Address::verifyAddress(std::string address)
 {
+// Lots of comment below since we use directly hash160 not address	
+/*
 	// Check length
 	if(address.length() > 34) {
 		false;
@@ -24,6 +26,8 @@ bool Address::verifyAddress(std::string address)
 	std::string noPrefix = address.substr(1);
 
 	secp256k1::uint256 value = Base58::toBigInt(noPrefix);
+*/
+	secp256k1::uint256 value = secp256k1::uint256(address);
 	unsigned int words[6];
 	unsigned int hash[5];
 	unsigned int checksum;
@@ -32,7 +36,8 @@ bool Address::verifyAddress(std::string address)
 	memcpy(hash, words, sizeof(unsigned int) * 5);
 	checksum = words[5];
 
-	return crypto::checksum(hash) == checksum;
+//	return crypto::checksum(hash) == checksum; 
+	return true;
 }
 
 std::string Address::fromPublicKey(const secp256k1::ecpoint &p, bool compressed)

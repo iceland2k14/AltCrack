@@ -27,7 +27,7 @@ private:
     CLTargetList _deviceTargetList;
 
     secp256k1::uint256 _start;
-    
+	secp256k1::uint256 _end;
     std::vector<hash160> _targetList;
 
     std::vector<KeySearchResult> _results;
@@ -42,6 +42,7 @@ private:
 
     int _compression = PointCompressionType::COMPRESSED;
 
+	bool _randomMode = false;
     uint64_t _iterations = 0;
 
     secp256k1::uint256 _stride = 1;
@@ -106,6 +107,7 @@ private:
     void initializeBloomFilter(const std::vector<struct hash160> &targets, uint64_t mask);
 
     uint64_t getOptimalBloomFilterMask(double p, size_t n);
+	std::vector<secp256k1::uint256> exponents;
 
 public:
 
@@ -114,7 +116,7 @@ public:
 
 
     // Initialize the device
-    virtual void init(const secp256k1::uint256 &start, int compression, const secp256k1::uint256 &stride);
+    virtual void init(const secp256k1::uint256 &start, const secp256k1::uint256 &end, int compression, const secp256k1::uint256 &stride, bool randomMode);
 
     // Perform one iteration
     virtual void doStep();

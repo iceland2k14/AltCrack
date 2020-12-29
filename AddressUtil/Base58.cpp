@@ -43,6 +43,16 @@ secp256k1::uint256 Base58::toBigInt(const std::string &s)
 
 void Base58::toHash160(const std::string &s, unsigned int hash[5])
 {
+//	Heavily modified code for altcoin. Direct reading hash160 to Hash160. No Base58 conversion	
+//	unsigned char buffer[20] = { 0 };
+//	memcpy(&buffer[0], &s[0], 20); // hash160 of 20 byte buffer
+//	std::vector<unsigned char> vch(&buffer[0], &buffer[0] + 20);
+//	secp256k1::uint256 value = secp256k1::uint256(s);
+
+//	memcpy(&value, vch.data(), sizeof(value));
+//	sscanf(s.c_str(), "%llx", &value);
+
+// Below is orginal code of Base58 conversion. Next line commented
 	secp256k1::uint256 value = toBigInt(s);
 	unsigned int words[6];
 

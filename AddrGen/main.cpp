@@ -1,5 +1,6 @@
 #include <iostream>
-#include<string>
+#include <string>
+#include <time.h>
 #include "secp256k1.h"
 #include "util.h"
 #include "AddressUtil.h"
@@ -8,6 +9,9 @@
 int main(int argc, char **argv)
 {
     std::vector<secp256k1::uint256> keys;
+
+//	time_t start, end;
+	clock_t start, end;
 
 	bool compressed = true;
     bool printPrivate = false;
@@ -71,6 +75,9 @@ int main(int argc, char **argv)
         }
     }
 
+//	time(&start);
+	start = clock();
+
     for(int i = 0; i < keys.size(); i++) {
         secp256k1::uint256 k = keys[i];
 
@@ -94,6 +101,10 @@ int main(int argc, char **argv)
             std::cout << address << std::endl;
         }
     }
+
+//	time(&end);
+	end = clock();
+	std::cout << " Total taken : " << double(end - start)/double(CLOCKS_PER_SEC) << " s" << std::endl;
 
 	return 0;
 }
