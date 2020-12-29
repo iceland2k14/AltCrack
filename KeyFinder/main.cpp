@@ -53,7 +53,7 @@ typedef struct {
     uint64_t totalkeys = 0;
     unsigned int elapsed = 0;
     secp256k1::uint256 stride = 1;
-
+	bool randomMode = false;
     bool follow = false;
 }RunConfig;
 
@@ -189,19 +189,23 @@ bool parseKeyspace(const std::string &s, secp256k1::uint256 &start, secp256k1::u
 
 void usage()
 {
-    printf("BitCrack OPTIONS [TARGETS]\n");
-    printf("Where TARGETS is one or more addresses\n\n");
+	printf("\n\n=================== Modified by IceLand ===================\n");
+	printf("This program searches for 20 byte HASH160 of any Altcoin from the given Hash160 file\n");
+	printf("=============================================================\n");
+	printf("AltCrack OPTIONS [TARGETS]\n");
+    printf("Where TARGETS is one or more Hash160\n\n");
 	
     printf("--help                  Display this message\n");
     printf("-c, --compressed        Use compressed points\n");
     printf("-u, --uncompressed      Use Uncompressed points\n");
+	printf("-r, --random            Use random values from keyspace\n");
     printf("--compression  MODE     Specify compression where MODE is\n");
     printf("                          COMPRESSED or UNCOMPRESSED or BOTH\n");
     printf("-d, --device ID         Use device ID\n");
     printf("-b, --blocks N          N blocks\n");
     printf("-t, --threads N         N threads per block\n");
     printf("-p, --points N          N points per thread\n");
-    printf("-i, --in FILE           Read addresses from FILE, one per line\n");
+    printf("-i, --in FILE           Read Hash160 from FILE, one per line\n");
     printf("-o, --out FILE          Write keys to FILE\n");
     printf("-f, --follow            Follow text output\n");
     printf("--list-devices          List available devices\n");
@@ -233,7 +237,9 @@ DeviceParameters getDefaultParameters(const DeviceManager::DeviceInfo &device)
 	p.threads = 256;
     p.blocks = 32;
 	p.pointsPerThread = 32;
-
+	//p.threads = 32;
+	//p.blocks = device.computeUnits * p.threads;
+	//p.pointsPerThread = pow(2, floor(log(device.memory / (4 * 1024 * p.blocks)) / log(2))); //best power of 2 based on device memory assuming 4kb per block.
 	return p;
 }
 
@@ -372,12 +378,15 @@ int run()
         Logger::log(LogLevel::Error, "device " + util::format(_config.device) + " does not exist");
         return 1;
     }
-
+	system("COLOR 07");
+	printf("\n================= \x1B[32m[+]\x1B[0m Modified by IceLand : Use Hash160 file to search for all the altcoins ==============\n\n");
     Logger::log(LogLevel::Info, "Compression: " + getCompressionString(_config.compression));
     Logger::log(LogLevel::Info, "Starting at: " + _config.nextKey.toString());
     Logger::log(LogLevel::Info, "Ending at:   " + _config.endKey.toString());
     Logger::log(LogLevel::Info, "Counting by: " + _config.stride.toString());
-
+	if (_config.randomMode) {
+		Logger::log(LogLevel::Info, "Generating random starting points");
+	}
     try {
 
         _lastUpdate = util::getSystemTime();
@@ -401,7 +410,7 @@ int run()
         // Get device context
         KeySearchDevice *d = getDeviceContext(_devices[_config.device], _config.blocks, _config.threads, _config.pointsPerThread);
 
-        KeyFinder f(_config.nextKey, _config.endKey, _config.compression, d, _config.stride);
+        KeyFinder f(_config.nextKey, _config.endKey, _config.compression, d, _config.stride, _config.randomMode);
 
         f.setResultCallback(resultCallback);
         f.setStatusInterval(_config.statusInterval);
@@ -509,6 +518,7 @@ int main(int argc, char **argv)
 	parser.add("-c", "--compressed", false);
 	parser.add("-u", "--uncompressed", false);
     parser.add("", "--compression", true);
+	parser.add("-r", "--random", false);
 	parser.add("-i", "--in", true);
 	parser.add("-o", "--out", true);
     parser.add("-f", "--follow", false);
@@ -547,6 +557,8 @@ int main(int argc, char **argv)
 				optCompressed = true;
             } else if(optArg.equals("-u", "--uncompressed")) {
                 optUncompressed = true;
+			} else if (optArg.equals("-r", "--random")) {
+				_config.randomMode = true;
             } else if(optArg.equals("", "--compression")) {
                 _config.compression = parseCompressionString(optArg.arg);
 			} else if(optArg.equals("-i", "--in")) {
