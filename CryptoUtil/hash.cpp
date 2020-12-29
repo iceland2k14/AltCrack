@@ -13,7 +13,7 @@ unsigned int crypto::checksum(const unsigned int *hash)
 	unsigned int digest[8] = { 0 };
 
 	// Insert network byte, shift everything right 1 byte
-	msg[0] = 0x00; // main network
+	msg[0] = 0x00; // 0x00 for BTC// 0x30 for LTC//0x1cb8 main network t1 address// 0x1cbd main network t3 address for Zcash
 	msg[0] |= hash[0] >> 8;
 	msg[1] = (hash[0] << 24) | (hash[1] >> 8);
 	msg[2] = (hash[1] << 24) | (hash[2] >> 8);

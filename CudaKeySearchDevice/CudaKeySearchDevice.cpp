@@ -58,7 +58,7 @@ CudaKeySearchDevice::CudaKeySearchDevice(int device, int threads, int pointsPerT
     _pointsPerThread = pointsPerThread;
 }
 
-void CudaKeySearchDevice::init(const secp256k1::uint256 &start, int compression, const secp256k1::uint256 &stride)
+void CudaKeySearchDevice::init(const secp256k1::uint256 &start, const secp256k1::uint256 &end, int compression, const secp256k1::uint256 &stride, bool randomMode)
 {
     if(start.cmp(secp256k1::N) >= 0) {
         throw KeySearchException("Starting key is out of range");
@@ -66,8 +66,10 @@ void CudaKeySearchDevice::init(const secp256k1::uint256 &start, int compression,
 
     _startExponent = start;
 
+	_end = end;
     _compression = compression;
 
+	_randomMode = randomMode;
     _stride = stride;
 
     cudaCall(cudaSetDevice(_device));
@@ -84,8 +86,14 @@ void CudaKeySearchDevice::init(const secp256k1::uint256 &start, int compression,
 
     // Set the incrementor
     secp256k1::ecpoint g = secp256k1::G();
-    secp256k1::ecpoint p = secp256k1::multiplyPoint(secp256k1::uint256((uint64_t)_threads * _blocks * _pointsPerThread) * _stride, g);
-
+    //secp256k1::ecpoint p = secp256k1::multiplyPoint(secp256k1::uint256((uint64_t)_threads * _blocks * _pointsPerThread) * _stride, g);
+	secp256k1::ecpoint p;
+	if (_randomMode) {
+		p = secp256k1::multiplyPoint(_stride, g);
+	}
+	else {
+		p = secp256k1::multiplyPoint(secp256k1::uint256((uint64_t)_threads * _blocks * _pointsPerThread) * _stride, g);
+	}
     cudaCall(_resultList.init(sizeof(CudaDeviceResult), 16));
 
     cudaCall(setIncrementorPoint(p.x, p.y));
@@ -97,17 +105,32 @@ void CudaKeySearchDevice::generateStartingPoints()
     uint64_t totalPoints = (uint64_t)_pointsPerThread * _threads * _blocks;
     uint64_t totalMemory = totalPoints * 40;
 
-    std::vector<secp256k1::uint256> exponents;
+    //std::vector<secp256k1::uint256> exponents;
 
     Logger::log(LogLevel::Info, "Generating " + util::formatThousands(totalPoints) + " starting points (" + util::format("%.1f", (double)totalMemory / (double)(1024 * 1024)) + "MB)");
 
     // Generate key pairs for k, k+1, k+2 ... k + <total points in parallel - 1>
     secp256k1::uint256 privKey = _startExponent;
 
-    exponents.push_back(privKey);
+    //exponents.push_back(privKey);
+	if (!_randomMode) {
+		exponents.push_back(privKey);
+	}
 
-    for(uint64_t i = 1; i < totalPoints; i++) {
-        privKey = privKey.add(_stride);
+	for (uint64_t i = !_randomMode ? 1 : 0; i < totalPoints; i++) {
+
+		if (_randomMode) {
+			privKey = secp256k1::getRandomRange(_startExponent, _end);
+		}
+		else {
+			privKey = privKey.add(_stride);
+		}
+
+    //for(uint64_t i = 1; i < totalPoints; i++) {
+    //    privKey = privKey.add(_stride);
+		if (_randomMode && i < 3) {
+			Logger::log(LogLevel::Info, "Starting point sample: " + privKey.toString() + " (" + std::to_string(privKey.getBitRange()) + " bit range)");
+		}
         exponents.push_back(privKey);
     }
 
@@ -126,6 +149,9 @@ void CudaKeySearchDevice::generateStartingPoints()
 
     Logger::log(LogLevel::Info, "Done");
 
+	if (!_randomMode) {
+		exponents.clear();
+	}
     _deviceKeys.clearPrivateKeys();
 }
 
@@ -147,7 +173,7 @@ void CudaKeySearchDevice::doStep()
     uint64_t numKeys = (uint64_t)_blocks * _threads * _pointsPerThread;
 
     try {
-        if(_iterations < 2 && _startExponent.cmp(numKeys) <= 0) {
+        if(!_randomMode && _iterations < 2 && _startExponent.cmp(numKeys) <= 0) {
             callKeyFinderKernel(_blocks, _threads, _pointsPerThread, true, _compression);
         } else {
             callKeyFinderKernel(_blocks, _threads, _pointsPerThread, false, _compression);
@@ -240,8 +266,22 @@ void CudaKeySearchDevice::getResultsInternal()
         KeySearchResult minerResult;
 
         // Calculate the private key based on the number of iterations and the current thread
-        secp256k1::uint256 offset = (secp256k1::uint256((uint64_t)_blocks * _threads * _pointsPerThread * _iterations) + secp256k1::uint256(getPrivateKeyOffset(rPtr->thread, rPtr->block, rPtr->idx))) * _stride;
-        secp256k1::uint256 privateKey = secp256k1::addModN(_startExponent, offset);
+        //secp256k1::uint256 offset = (secp256k1::uint256((uint64_t)_blocks * _threads * _pointsPerThread * _iterations) + secp256k1::uint256(getPrivateKeyOffset(rPtr->thread, rPtr->block, rPtr->idx))) * _stride;
+        //secp256k1::uint256 privateKey = secp256k1::addModN(_startExponent, offset);
+		secp256k1::uint256 offset;
+		secp256k1::uint256 privateKey;
+
+		uint32_t privateKeyOffset = getPrivateKeyOffset(rPtr->thread, rPtr->block, rPtr->idx);
+
+		if (!_randomMode) {
+			offset = (secp256k1::uint256((uint64_t)_blocks * _threads * _pointsPerThread * _iterations) + privateKeyOffset) * _stride;
+			privateKey = secp256k1::addModN(_startExponent, offset);
+		}
+		else {
+			offset = secp256k1::uint256(_iterations) * _stride;
+			privateKey = exponents[privateKeyOffset];
+			privateKey = secp256k1::addModN(privateKey, offset);
+		}
 
         minerResult.privateKey = privateKey;
         minerResult.compressed = rPtr->compressed;
