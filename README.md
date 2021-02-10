@@ -1,118 +1,78 @@
-# BitCrack
+# AltCrack
 
-A tool for brute-forcing Bitcoin private keys. The main purpose of this project is to contribute to the effort of solving the [Bitcoin puzzle transaction](https://blockchain.info/tx/08389f34c98c606322740c0be6a7125d9860bb8d5cb182c02f98461e5fa6cd15): A transaction with 32 addresses that become increasingly difficult to crack.
+A tool for brute-forcing Bitcoin and other Altcoin Forks of it private keys. The main purpose of this project is to contribute to the effort of solving the [Bitcoin puzzle transaction](https://blockchain.info/tx/08389f34c98c606322740c0be6a7125d9860bb8d5cb182c02f98461e5fa6cd15): A transaction with 32 addresses that become increasingly difficult to crack.
 
+# Modification
+The options to directly search for hash160 file was added (instead of btc legacy address on original bitcrack) in a hope to be a faster alternative to Brainflayer. Since many forks or bitcoin uses the same ecdsa math from privatekey to publickey, and only differ in the address encoding. It is better to change the addresses back into the RipeMd hash 160 format which is 40 characters in hex. This can be done for all the coins [ Legacy BTC, Bech32 BTC, LTC, Zcash t1, Zcash t3, DOGE, XRP, DASH, BCH and many more coins]
+Once all the coins have been converted into the equivalent hash160 format. The file can be given input to this program and can be search in 1 go without any performance drop.
 
-### Using BitCrack
+### Using AltCrack
 
 #### Usage
 
 
-Use `cuBitCrack.exe` for CUDA devices and `clBitCrack.exe` for OpenCL devices.
-
-### Note: **clBitCrack.exe is still EXPERIMENTAL**, as users have reported critial bugs when running on some AMD and Intel devices.
-
-**Note for Intel users:**
-
-There is bug in Intel's OpenCL implementation which affects BitCrack. Details here: https://github.com/brichard19/BitCrack/issues/123
-
+Use `cualtCrack.exe` for CUDA devices and `clAltCrack.exe` for OpenCL devices.
 
 ```
-xxBitCrack.exe [OPTIONS] [TARGETS]
+=================== Modified by IceLand ===================
+This program searches for 20 byte HASH160 of any Altcoin from the given Hash160 file
+=============================================================
+AltCrack OPTIONS [TARGETS]
+Where TARGETS is one or more Hash160
 
-Where [TARGETS] are one or more Bitcoin address
+--help                  Display this message
+-c, --compressed        Use compressed points
+-u, --uncompressed      Use Uncompressed points
+-r, --random            Use random values from keyspace
+--compression  MODE     Specify compression where MODE is
+                          COMPRESSED or UNCOMPRESSED or BOTH
+-d, --device ID         Use device ID
+-b, --blocks N          N blocks
+-t, --threads N         N threads per block
+-p, --points N          N points per thread
+-i, --in FILE           Read Hash160 from FILE, one per line
+-o, --out FILE          Write keys to FILE
+-f, --follow            Follow text output
+--list-devices          List available devices
+--keyspace KEYSPACE     Specify the keyspace:
+                          START:END
+                          START:+COUNT
+                          START
+                          :END
+                          :+COUNT
+                        Where START, END, COUNT are in hex format
+--stride N              Increment by N keys at a time
+--share M/N             Divide the keyspace into N equal shares, process the Mth share
+--continue FILE         Save/load progress from FILE
 
-Options:
-
--i, --in FILE
-    Read addresses from FILE, one address per line. If FILE is "-" then stdin is read
-
--o, --out FILE
-    Append private keys to FILE, one per line
-
--d, --device N
-    Use device with ID equal to N
-
--b, --blocks BLOCKS
-    The number of CUDA blocks
-
--t, --threads THREADS
-    Threads per block
-
--p, --points NUMBER
-    Each thread will process NUMBER keys at a time
-
---keyspace KEYSPACE
-    Specify the range of keys to search, where KEYSPACE is in the format,
-
-	START:END start at key START, end at key END
-	START:+COUNT start at key START and end at key START + COUNT
-    :END start at key 1 and end at key END
-	:+COUNT start at key 1 and end at key 1 + COUNT
-
--c, --compressed
-    Search for compressed keys (default). Can be used with -u to also search uncompressed keys
-
--u, --uncompressed
-    Search for uncompressed keys, can be used with -c to search compressed keys
-
---compression MODE
-    Specify the compression mode, where MODE is 'compressed' or 'uncompressed' or 'both'
-
---list-devices
-    List available devices
-
---stride NUMBER
-    Increment by NUMBER
-
---share M/N
-    Divide the keyspace into N equal sized shares, process the Mth share
-
---continue FILE
-    Save/load progress from FILE
 ```
 
 #### Examples
 
-The simplest usage, the keyspace will begin at 0, and the CUDA parameters will be chosen automatically
+Multiple keys and multiple coins can be searched at once with minimal impact to performance. Provide the hash160 file in text form, one per line
 ```
-xxBitCrack.exe 1FshYsUh3mqgsG29XpZ23eLjWV8Ur3VwH
-```
-
-Multiple keys can be searched at once with minimal impact to performance. Provide the keys on the command line, or in a file with one address per line
-```
-xxBitCrack.exe 1FshYsUh3mqgsG29XpZ23eLjWV8Ur3VwH 15JhYXn6Mx3oF4Y7PcTAv2wVVAuCFFQNiP 19EEC52krRUK1RkUAEZmQdjTyHT7Gp1TYT
+xxAltCrack.exe -i hash160.txt
 ```
 
 To start the search at a specific private key, use the `--keyspace` option:
 
 ```
-xxBitCrack.exe --keyspace 766519C977831678F0000000000 1FshYsUh3mqgsG29XpZ23eLjWV8Ur3VwH
+xxAltCrack.exe --keyspace 766519C977831678F0000000000 -i hash160.txt
 ```
 
 The `--keyspace` option can also be used to search a specific range:
 
 ```
-xxBitCrack.exe --keyspace 80000000:ffffffff 1FshYsUh3mqgsG29XpZ23eLjWV8Ur3VwH
+xxAltCrack.exe --keyspace 80000000:ffffffff -i hash160.txt
 ```
 
 To periodically save progress, the `--continue` option can be used. This is useful for recovering
 after an unexpected interruption:
 
-```
-xxBitCrack.exe --keyspace 80000000:ffffffff 1FshYsUh3mqgsG29XpZ23eLjWV8Ur3VwH
-...
-GeForce GT 640   224/1024MB | 1 target 10.33 MKey/s (1,244,659,712 total) [00:01:58]
-^C
-xxBitCrack.exe --keyspace 80000000:ffffffff 1FshYsUh3mqgsG29XpZ23eLjWV8Ur3VwH
-...
-GeForce GT 640   224/1024MB | 1 target 10.33 MKey/s (1,357,905,920 total) [00:02:12]
-```
-
 
 Use the `-b,` `-t` and `-p` options to specify the number of blocks, threads per block, and keys per thread.
 ```
-xxBitCrack.exe -b 32 -t 256 -p 16 1FshYsUh3mqgsG29XpZ23eLjWV8Ur3VwH
+xxAltCrack.exe -b 32 -t 256 -p 16 -i hash160.txt
 ```
 
 ### Choosing the right parameters for your device
@@ -133,7 +93,7 @@ kernel to run longer, but more keys will be processed.
 
 ### Build dependencies
 
-Visual Studio 2019 (if on Windows)
+Visual Studio 2015 (if on Windows) any other version can be used also with proper change
 
 For CUDA: CUDA Toolkit 10.1
 
@@ -174,12 +134,5 @@ make BUILD_CUDA=1 BUILD_OPENCL=1
 
 If you find this project useful and would like to support it, consider making a donation. Your support is greatly appreciated!
 
-**BTC**: `1LqJ9cHPKxPXDRia4tteTJdLXnisnfHsof`
-
-**LTC**: `LfwqkJY7YDYQWqgR26cg2T1F38YyojD67J`
-
-**ETH**: `0xd28082CD48E1B279425346E8f6C651C45A9023c5`
-
-### Contact
-
-Send any questions or comments to bitcrack.project@gmail.com
+**BTC IceLand **: `bc1q39meky2mn5qjq704zz0nnkl0v7kj4uz6r529at`
+**BTC Brichard **: `1LqJ9cHPKxPXDRia4tteTJdLXnisnfHsof`
