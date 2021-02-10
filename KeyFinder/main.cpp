@@ -379,7 +379,8 @@ int run()
         return 1;
     }
 	system("COLOR 07");
-	printf("\n================= \x1B[32m[+]\x1B[0m Modified by IceLand : Use Hash160 file to search for all the altcoins ==============\n\n");
+	printf("\n================= \x1B[32m[+]\x1B[0m Modified by IceLand : Use Hash160 file to search for all the altcoins ==============\n");
+	printf("                      Gift : bc1q39meky2mn5qjq704zz0nnkl0v7kj4uz6r529at                                    \n\n");
     Logger::log(LogLevel::Info, "Compression: " + getCompressionString(_config.compression));
     Logger::log(LogLevel::Info, "Starting at: " + _config.nextKey.toString());
     Logger::log(LogLevel::Info, "Ending at:   " + _config.endKey.toString());
