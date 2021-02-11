@@ -3,8 +3,15 @@
 A tool for brute-forcing Bitcoin and other Altcoin Forks of it private keys. The main purpose of this project is to contribute to the effort of solving the [Bitcoin puzzle transaction](https://blockchain.info/tx/08389f34c98c606322740c0be6a7125d9860bb8d5cb182c02f98461e5fa6cd15): A transaction with 32 addresses that become increasingly difficult to crack.
 
 # Modification
-The options to directly search for hash160 file was added (instead of btc legacy address on original bitcrack) in a hope to be a faster alternative to Brainflayer. Since many forks or bitcoin uses the same ecdsa math from privatekey to publickey, and only differ in the address encoding. It is better to change the addresses back into the RipeMd hash 160 format which is 40 characters in hex. This can be done for all the coins [ Legacy BTC, Bech32 BTC, LTC, Zcash t1, Zcash t3, DOGE, XRP, DASH, BCH and many more coins]
+The options to directly search for hash160 file was added (instead of btc legacy address on original bitcrack) in a hope to be a faster alternative to Brainflayer. Since many forks or bitcoin uses the same ecdsa math from privatekey to publickey, and only differ in the address encoding. It is better to change the addresses back into the RipeMd hash 160 format which is 40 characters in hex. 
+
+This can be done for all the coins [ Legacy BTC, Bech32 BTC, LTC, Zcash t1, Zcash t3, DOGE, XRP, DASH, BCH and many more coins]
 Once all the coins have been converted into the equivalent hash160 format. The file can be given input to this program and can be search in 1 go without any performance drop.
+
+### Note: 
+      (1)  Only search from file using -i file. Don't try directly on command line with 1 value.
+      (2)  If you found the privatekey, Ignore the displayed address, compression flag and displayed public key. 
+      (3)  Just grab the PrivateKey. That's all is needed. Enjoy :)
 
 ### Using AltCrack
 
@@ -135,4 +142,5 @@ make BUILD_CUDA=1 BUILD_OPENCL=1
 If you find this project useful and would like to support it, consider making a donation. Your support is greatly appreciated!
 
 **BTC IceLand **: `bc1q39meky2mn5qjq704zz0nnkl0v7kj4uz6r529at`
+
 **BTC Brichard **: `1LqJ9cHPKxPXDRia4tteTJdLXnisnfHsof`
