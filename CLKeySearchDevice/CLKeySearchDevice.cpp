@@ -192,6 +192,8 @@ void CLKeySearchDevice::init(const secp256k1::uint256 &start, const secp256k1::u
 
     _start = start;
 
+	_end = end;
+
     _stride = stride;
 
 	_randomMode = randomMode;
