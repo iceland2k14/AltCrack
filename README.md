@@ -141,6 +141,10 @@ make BUILD_CUDA=1 BUILD_OPENCL=1
 
 If you find this project useful and would like to support it, consider making a donation. Your support is greatly appreciated!
 
-**BTC IceLand **: `bc1q39meky2mn5qjq704zz0nnkl0v7kj4uz6r529at`
-
+**IceLand **
+```
+BTC:	bc1q39meky2mn5qjq704zz0nnkl0v7kj4uz6r529at
+ETH:	0xa74fC23f07A33B90d6848dF0bb409bEA5Ac16b28
+DOGE:	D5Wh5bQMc3XVGdLbjJbGjryjNom5tZY6dD
+```
 **BTC Brichard **: `1LqJ9cHPKxPXDRia4tteTJdLXnisnfHsof`
